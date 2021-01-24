@@ -25,9 +25,13 @@ type thumbnailhelper struct {
 	youtuberegex *regexp.Regexp
 }
 
+type ThumbnailHelper interface {
+	GetThumbnailVideo(videoURL string) (string, error)
+}
+
 func (m *thumbnailhelper) GetThumbnailVideo(videoURL string) (string, error) {
 	if m.youtuberegex.MatchString(videoURL) {
-		return m.GetThumbnailYoutube(videoURL)
+		return m.getThumbnailYoutube(videoURL)
 	}
 	fileName := fmt.Sprintf("img_%d.png", time.Now().Unix())
 	cmd := exec.Command(m.ffmpegPath, "-i", videoURL, "-ss", "00:00:01.000", "-vframes", "1", fileName)
@@ -41,10 +45,10 @@ func (m *thumbnailhelper) GetThumbnailVideo(videoURL string) (string, error) {
 
 }
 
-func (m *thumbnailhelper) GetThumbnailYoutube(videoURL string) (string, error) {
-	if !m.youtuberegex.MatchString(videoURL) {
-		return "", errors.New("Not type youtube URL")
-	}
+func (m *thumbnailhelper) getThumbnailYoutube(videoURL string) (string, error) {
+	// if !m.youtuberegex.MatchString(videoURL) {
+	// 	return "", errors.New("Not type youtube URL")
+	// }
 	var youtubeID string
 	if strings.Contains(videoURL, "/embed/") {
 		youtubeID = strings.Split(videoURL, "/embed/")[1]
@@ -55,7 +59,7 @@ func (m *thumbnailhelper) GetThumbnailYoutube(videoURL string) (string, error) {
 	return fmt.Sprintf("https://i.ytimg.com/vi/%s/%d.jpg", youtubeID, 0), nil
 }
 
-func NewThumbailHelper(ffmpegPath, uploadImageURL string) *thumbnailhelper {
+func NewThumbailHelper(ffmpegPath, uploadImageURL string) ThumbnailHelper {
 	if ffmpegPath == "" {
 		ffmpegPath = "/usr/bin/ffmpeg"
 	}
